@@ -649,10 +649,10 @@ async function saveCol(col) {
   });
 
   // delete old
-  await supabase.from('scores').delete().eq('board', col);
+  await supabaseClient.from('scores').delete().eq('board', col);
 
   // insert new
-  await supabase.from('scores').insert(scores);
+  await supabaseClient.from('scores').insert(scores);
 
   showToast(`✔ ${col.toUpperCase()} SAVED!`, '#44ff88');
 }
