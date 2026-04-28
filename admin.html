@@ -414,6 +414,8 @@
 <div id="login-overlay">
   <div class="login-title">⚠ ADMIN ACCESS ⚠<br><br>ENTER PASSWORD</div>
   <div class="login-box">
+    <div class="login-label">USERNAME</div>
+    <input type="text" class="login-input" id="user-input" placeholder="ADMIN" autocomplete="off">
     <div class="login-label">PASSWORD</div>
     <input type="password" class="login-input" id="pw-input" placeholder="••••••••" autocomplete="off">
     <div class="login-error" id="pw-error">ACCESS DENIED</div>
@@ -536,12 +538,14 @@ function getScores(col) {
 }
 
 async function tryLogin() {
-  const pw = document.getElementById('pw-input').value;
+  const username = document.getElementById('user-input').value.trim();
+  const password = document.getElementById('pw-input').value;
 
   const { data, error } = await supabase
     .from('admins')
     .select('*')
-    .eq('password', pw)
+    .eq('username', username)
+    .eq('password', password)
     .single();
 
   if (data) {
