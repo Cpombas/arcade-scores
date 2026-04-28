@@ -493,7 +493,7 @@ const DEFAULT_BK2 = [
 ];
 
 async function getScoresFromDB(board) {
-  const { data } = await supabase
+  const { data } = await supabaseClient
     .from('scores')
     .select('*')
     .eq('board', board)
