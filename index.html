@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARCADE HIGH SCORES</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323:wght@400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --purple-deep: #1a0033;
+    --purple-mid: #3d0070;
+    --purple-bright: #8b00ff;
+    --purple-glow: #b44dff;
+    --gold: #ffd700;
+    --gold-light: #ffe566;
+    --gold-dark: #b8860b;
+    --silver: #c0c0c0;
+    --bronze: #cd7f32;
+    --yellow: #ffee00;
+    --yellow-dim: #ccbb00;
+    --white: #fff8e7;
+    --scanline: rgba(0,0,0,0.08);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background-color: var(--purple-deep);
+    background-image:
+      repeating-linear-gradient(0deg, var(--scanline) 0px, var(--scanline) 1px, transparent 1px, transparent 4px),
+      radial-gradient(ellipse at 50% 0%, #3d007080 0%, transparent 70%),
+      radial-gradient(ellipse at 50% 100%, #1a003380 0%, transparent 70%);
+    min-height: 100vh;
+    font-family: 'Press Start 2P', monospace;
+    color: var(--white);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 16px 60px;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(transparent 50%, rgba(0,0,0,0.04) 50%);
+    background-size: 100% 4px;
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    border: 6px solid var(--purple-bright);
+    box-shadow: inset 0 0 40px rgba(139,0,255,0.3), 0 0 40px rgba(139,0,255,0.3);
+    pointer-events: none;
+    z-index: 99;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    text-align: center;
+    margin-bottom: 32px;
+    animation: fadeDown 0.6s ease both;
+  }
+
+  .coin-text {
+    font-family: 'VT323', monospace;
+    font-size: 20px;
+    color: var(--yellow);
+    letter-spacing: 4px;
+    animation: blink 1.2s step-end infinite;
+    margin-bottom: 8px;
+  }
+
+  .title-main {
+    font-size: clamp(18px, 4vw, 32px);
+    color: var(--gold);
+    text-shadow:
+      0 0 10px var(--gold),
+      0 0 30px var(--gold-dark),
+      4px 4px 0px var(--purple-mid);
+    letter-spacing: 2px;
+    line-height: 1.4;
+    margin-bottom: 6px;
+    animation: glitch 8s infinite;
+  }
+
+  .title-sub {
+    font-size: clamp(10px, 2vw, 14px);
+    color: var(--purple-glow);
+    text-shadow: 0 0 8px var(--purple-bright);
+    letter-spacing: 4px;
+  }
+
+  .divider {
+    width: min(1400px, 100%);
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--gold), var(--purple-bright), var(--gold), transparent);
+    margin: 16px auto;
+    box-shadow: 0 0 12px var(--gold);
+    animation: shimmer 3s linear infinite;
+  }
+
+  /* ── TWO COLUMN LAYOUT ── */
+  .columns-wrapper {
+    width: min(1400px, 100%);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    align-items: start;
+  }
+
+  .column {
+    padding: 0 16px;
+    position: relative;
+  }
+
+  .column:first-child {
+    border-right: 2px solid var(--purple-mid);
+  }
+
+  .col-divider-v {
+    width: 2px;
+    background: linear-gradient(180deg, transparent, var(--gold), var(--purple-bright), var(--gold), transparent);
+    box-shadow: 0 0 10px var(--purple-bright);
+    align-self: stretch;
+    display: none; /* handled by border */
+  }
+
+  /* ── PODIUM ── */
+  .podium-section {
+    width: 100%;
+    margin-bottom: 24px;
+    animation: fadeUp 0.7s ease 0.2s both;
+  }
+
+  .section-label {
+    font-size: 9px;
+    color: var(--purple-glow);
+    text-align: center;
+    letter-spacing: 6px;
+    margin-bottom: 20px;
+    text-shadow: 0 0 8px var(--purple-bright);
+  }
+
+  .podium {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 10px;
+    padding: 0 4px;
+  }
+
+  .podium-slot {
+    flex: 1;
+    max-width: 180px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+  }
+
+  .podium-slot.first  { order: 2; }
+  .podium-slot.second { order: 1; }
+  .podium-slot.third  { order: 3; }
+
+  .podium-crown {
+    font-size: 24px;
+    margin-bottom: 6px;
+    animation: float 2s ease-in-out infinite;
+  }
+
+  .podium-slot.second .podium-crown,
+  .podium-slot.third .podium-crown {
+    font-size: 18px;
+    animation-delay: 0.3s;
+  }
+
+  .podium-card {
+    width: 100%;
+    border: 3px solid;
+    padding: 10px 6px 8px;
+    text-align: center;
+    position: relative;
+    clip-path: polygon(0 8px, 8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px));
+  }
+
+  .podium-slot.first .podium-card {
+    border-color: var(--gold);
+    background: linear-gradient(135deg, #2a1500, #1a0033, #2a1500);
+    box-shadow: 0 0 20px rgba(255,215,0,0.5), inset 0 0 20px rgba(255,215,0,0.05);
+  }
+
+  .podium-slot.second .podium-card {
+    border-color: var(--silver);
+    background: linear-gradient(135deg, #111827, #1a0033, #111827);
+    box-shadow: 0 0 14px rgba(192,192,192,0.35);
+  }
+
+  .podium-slot.third .podium-card {
+    border-color: var(--bronze);
+    background: linear-gradient(135deg, #1a0a00, #1a0033, #1a0a00);
+    box-shadow: 0 0 14px rgba(205,127,50,0.35);
+  }
+
+  .podium-rank {
+    font-size: clamp(16px, 3vw, 24px);
+    margin-bottom: 6px;
+  }
+
+  .podium-slot.first  .podium-rank { color: var(--gold);   text-shadow: 0 0 12px var(--gold); }
+  .podium-slot.second .podium-rank { color: var(--silver); text-shadow: 0 0 8px var(--silver); }
+  .podium-slot.third  .podium-rank { color: var(--bronze); text-shadow: 0 0 8px var(--bronze); }
+
+  .podium-name {
+    font-size: clamp(6px, 1.2vw, 9px);
+    color: var(--white);
+    margin-bottom: 5px;
+    word-break: break-all;
+    line-height: 1.5;
+  }
+
+  .podium-score {
+    font-size: clamp(7px, 1.4vw, 10px);
+    color: var(--yellow);
+    text-shadow: 0 0 8px var(--yellow-dim);
+  }
+
+  .podium-base {
+    width: 100%;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    margin-top: 0;
+  }
+
+  .podium-block {
+    width: 100%;
+    border: 2px solid;
+    position: relative;
+  }
+
+  .podium-slot.first .podium-block {
+    height: 60px;
+    border-color: var(--gold);
+    background: repeating-linear-gradient(45deg, #2a1800, #2a1800 6px, #1e1000 6px, #1e1000 12px);
+    box-shadow: 0 0 16px rgba(255,215,0,0.4);
+  }
+
+  .podium-slot.second .podium-block {
+    height: 42px;
+    border-color: var(--silver);
+    background: repeating-linear-gradient(45deg, #1e2030, #1e2030 6px, #151825 6px, #151825 12px);
+  }
+
+  .podium-slot.third .podium-block {
+    height: 28px;
+    border-color: var(--bronze);
+    background: repeating-linear-gradient(45deg, #1e1008, #1e1008 6px, #140a00 6px, #140a00 12px);
+  }
+
+  /* ── LEADERBOARD ── */
+  .board-section {
+    width: 100%;
+    animation: fadeUp 0.7s ease 0.4s both;
+  }
+
+  .board-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 14px;
+    margin-bottom: 5px;
+    border: 2px solid var(--purple-mid);
+    background: rgba(61,0,112,0.25);
+    clip-path: polygon(0 4px, 4px 0, calc(100% - 4px) 0, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0 calc(100% - 4px));
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .board-row::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(139,0,255,0.08), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.4s ease;
+  }
+
+  .board-row:hover::before { transform: translateX(100%); }
+  .board-row:hover {
+    border-color: var(--purple-glow);
+    box-shadow: 0 0 16px rgba(180,77,255,0.25);
+  }
+
+  .row-rank {
+    font-size: clamp(8px, 1.5vw, 11px);
+    color: var(--purple-glow);
+    min-width: 26px;
+    text-shadow: 0 0 6px var(--purple-bright);
+  }
+
+  .row-sep { color: var(--purple-mid); font-size: 13px; }
+
+  .row-name {
+    font-size: clamp(7px, 1.4vw, 10px);
+    color: var(--white);
+    flex: 1;
+    word-break: break-all;
+  }
+
+  .row-score {
+    font-size: clamp(7px, 1.4vw, 10px);
+    color: var(--yellow);
+    text-shadow: 0 0 6px var(--yellow-dim);
+    white-space: nowrap;
+  }
+
+  .empty-row { color: var(--purple-mid) !important; font-style: italic; }
+
+  /* ── ADMIN LINK ── */
+  .admin-bar {
+    margin-top: 40px;
+    text-align: center;
+    animation: fadeUp 0.7s ease 0.6s both;
+  }
+
+  .admin-link {
+    font-family: 'VT323', monospace;
+    font-size: 18px;
+    color: var(--purple-glow);
+    text-decoration: none;
+    letter-spacing: 3px;
+    opacity: 0.4;
+    transition: all 0.3s;
+    border: 1px solid transparent;
+    padding: 4px 12px;
+  }
+
+  .admin-link:hover {
+    opacity: 1;
+    color: var(--gold);
+    border-color: var(--purple-mid);
+    text-shadow: 0 0 10px var(--gold);
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+
+  @keyframes shimmer {
+    0%   { background-position: -200% center; }
+    100% { background-position:  200% center; }
+  }
+
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes glitch {
+    0%, 90%, 100% { transform: translate(0); }
+    92% { transform: translate(-2px,  1px); }
+    94% { transform: translate( 2px, -1px); }
+    96% { transform: translate(-1px,  2px); }
+    98% { transform: translate( 1px, -2px); }
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 700px) {
+    .columns-wrapper {
+      grid-template-columns: 1fr;
+    }
+    .column:first-child {
+      border-right: none;
+      border-bottom: 2px solid var(--purple-mid);
+      padding-bottom: 32px;
+      margin-bottom: 32px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="coin-text">★ INSERT COIN ★</div>
+  <div class="title-main">HIGH SCORES</div>
+  <div class="title-sub">TOP PLAYERS</div>
+</div>
+
+<div class="divider"></div>
+
+<div class="columns-wrapper">
+
+  <!-- ══════════ BK 1 ══════════ -->
+  <div class="column">
+    <!-- PODIUM BK1 (3 spots) -->
+    <div class="podium-section">
+      <div class="section-label">— B K 1 —</div>
+      <div class="podium" id="podium-bk1"></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- RANKING BK1 -->
+    <div class="board-section">
+      <div class="section-label">— RANKING —</div>
+      <div id="board-bk1"></div>
+    </div>
+  </div>
+
+  <!-- ══════════ BK 2 ══════════ -->
+  <div class="column">
+    <!-- PODIUM BK2 (2 spots) -->
+    <div class="podium-section">
+      <div class="section-label">— B K 2 —</div>
+      <div class="podium" id="podium-bk2"></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- RANKING BK2 -->
+    <div class="board-section">
+      <div class="section-label">— RANKING —</div>
+      <div id="board-bk2"></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="admin-bar">
+  <a href="admin.html" class="admin-link">[ ADMIN ]</a>
+</div>
+
+<script>
+const DEFAULT_BK1 = [
+  { name: "THUNDERBOLT", score: 999999 },
+  { name: "PIXEL QUEEN", score: 847200 },
+  { name: "NEON WOLF",   score: 720500 },
+  { name: "STARDUST",    score: 610000 },
+  { name: "LAZERBEAK",   score: 555200 },
+  { name: "VORTEX",      score: 480100 },
+  { name: "CYBERGHOST",  score: 390750 },
+  { name: "IRONPULSE",   score: 312400 },
+  { name: "SHADOWFOX",   score: 255000 },
+  { name: "GALACTIC",    score: 198600 },
+  { name: "ROCKETMAN",   score: 145300 },
+  { name: "PIXELDUST",   score: 88800  },
+  { name: "NEWPLAYER",   score: 42000  },
+];
+
+const DEFAULT_BK2 = [
+  { name: "STARLORD",    score: 875000 },
+  { name: "NINJABYTE",   score: 760300 },
+  { name: "BLAZERUNNER", score: 620100 },
+  { name: "COMETFALL",   score: 510000 },
+  { name: "VOXEL",       score: 445500 },
+  { name: "DARKPULSE",   score: 370200 },
+  { name: "GLITCHWAVE",  score: 295000 },
+  { name: "HYPERION",    score: 210800 },
+  { name: "NEBULAX",     score: 158400 },
+  { name: "SPECTRAL",    score: 99100  },
+  { name: "PRISMATIC",   score: 67500  },
+  { name: "NEWENTRY",    score: 31000  },
+];
+
+function getScores(key, defaults) {
+  const raw = localStorage.getItem(key);
+  if (raw) return JSON.parse(raw);
+  localStorage.setItem(key, JSON.stringify(defaults));
+  return defaults;
+}
+
+/* ── Podium renderer ─────────────────────────────────────────── */
+function renderPodium(scores, containerId, spots) {
+  const podium = document.getElementById(containerId);
+  const medals = ['🥇','🥈','🥉'];
+  const classes = ['first','second','third'];
+  const rankLabels = ['#1','#2','#3'];
+
+  podium.innerHTML = '';
+  for (let i = 0; i < spots; i++) {
+    const s = scores[i] || null;
+    const isEmpty = !s;
+    const slot = document.createElement('div');
+    slot.className = `podium-slot ${classes[i]}`;
+    slot.innerHTML = `
+      <div class="podium-crown">${medals[i]}</div>
+      <div class="podium-card">
+        <div class="podium-rank">${rankLabels[i]}</div>
+        <div class="podium-name ${isEmpty ? 'empty-row' : ''}">${isEmpty ? '— EMPTY —' : escHtml(s.name)}</div>
+        <div class="podium-score">${isEmpty ? '' : formatScore(s.score)}</div>
+      </div>
+      <div class="podium-base">
+        <div class="podium-block"></div>
+      </div>
+    `;
+    podium.appendChild(slot);
+  }
+}
+
+/* ── Leaderboard renderer ────────────────────────────────────── */
+function renderBoard(scores, containerId, startIndex) {
+  const board = document.getElementById(containerId);
+  board.innerHTML = '';
+  for (let i = startIndex; i < startIndex + 10; i++) {
+    const s = scores[i];
+    const row = document.createElement('div');
+    row.className = 'board-row';
+    if (!s) {
+      row.innerHTML = `
+        <span class="row-rank">#${i+1}</span>
+        <span class="row-sep">›</span>
+        <span class="row-name empty-row">— EMPTY —</span>
+      `;
+    } else {
+      row.innerHTML = `
+        <span class="row-rank">#${i+1}</span>
+        <span class="row-sep">›</span>
+        <span class="row-name">${escHtml(s.name)}</span>
+        <span class="row-score">${formatScore(s.score)}</span>
+      `;
+    }
+    board.appendChild(row);
+  }
+}
+
+function formatScore(n) {
+  return Number(n).toLocaleString('en-US');
+}
+
+function escHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function render() {
+  const bk1 = getScores('arcade_scores_bk1', DEFAULT_BK1).slice(0, 13);
+  const bk2 = getScores('arcade_scores_bk2', DEFAULT_BK2).slice(0, 12);
+
+  renderPodium(bk1, 'podium-bk1', 3);   // BK1: 3 podium spots
+  renderBoard(bk1, 'board-bk1', 3);      // BK1: #4–#13
+
+  renderPodium(bk2, 'podium-bk2', 2);   // BK2: 2 podium spots
+  renderBoard(bk2, 'board-bk2', 2);      // BK2: #3–#12
+}
+
+render();
+
+window.addEventListener('storage', e => {
+  if (e.key === 'arcade_scores_bk1' || e.key === 'arcade_scores_bk2') render();
+});
+</script>
+</body>
+</html>
