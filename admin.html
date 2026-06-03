@@ -196,7 +196,7 @@
   /* ── TWO COLUMN EDITOR ── */
   .editor-columns {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, 1fr);
     gap: 0;
     width: 100%;
     align-items: start;
@@ -206,7 +206,7 @@
     padding: 0 20px;
   }
 
-  .editor-col:first-child {
+  .editor-col:not(:last-child) {
     border-right: 2px solid var(--purple-mid);
   }
 
@@ -477,6 +477,26 @@
       </div>
     </div>
 
+    <!-- ── ONEY ── -->
+    <div class="editor-col">
+      <div class="col-title">— ONEY —</div>
+      <table class="score-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>NAME</th>
+            <th>SCORE</th>
+            <th>DEL</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-oney"></tbody>
+      </table>
+      <div class="col-controls">
+        <button class="btn btn-add" onclick="addRow('oney')">+ ADD</button>
+        <button class="btn btn-save" onclick="saveCol('oney')">💾 SAVE ONEY</button>
+      </div>
+    </div>
+
   </div>
 
   <div class="controls">
@@ -530,10 +550,20 @@ const DEFAULTS = {
     { name: "PRISMATIC",   score: 67500  },
     { name: "NEWENTRY",    score: 31000  },
   ],
+  oney: [
+    { name: "THUNDERBOLT", score: 999999 },
+    { name: "PIXEL QUEEN", score: 847200 },
+    { name: "NEON WOLF",   score: 720500 },
+    { name: "COMETFALL",   score: 510000 },
+    { name: "VOXEL",       score: 445500 },
+    { name: "DARKPULSE",   score: 370200 },
+    { name: "GLITCHWAVE",  score: 295000 },
+    { name: "HYPERION",    score: 210800 },
+  ],
 };
 
-const STORAGE_KEYS = { bk1: 'arcade_scores_bk1', bk2: 'arcade_scores_bk2' };
-const MAX_ROWS = { bk1: 13, bk2: 12 };
+const STORAGE_KEYS = { bk1: 'arcade_scores_bk1', bk2: 'arcade_scores_bk2' , oney: 'arcade_scores_oney'};
+const MAX_ROWS = { bk1: 13, bk2: 12, oney: 8 };
 
 function getScores(col) {
   const raw = localStorage.getItem(STORAGE_KEYS[col]);
@@ -590,9 +620,11 @@ async function loadFromDB() {
 
   const bk1 = data.filter(x => x.board === 'bk1');
   const bk2 = data.filter(x => x.board === 'bk2');
+  const oney = data.filter(x => x.board === 'oney');
 
   renderTableFromData('bk1', bk1);
   renderTableFromData('bk2', bk2);
+  renderTableFromData('oney', oney)
 }
 
 function renderTableFromData(col, scores) {
@@ -660,6 +692,7 @@ async function saveCol(col) {
 function saveAll() {
   saveCol('bk1');
   saveCol('bk2');
+  saveCol('oney')
   showToast('✔ ALL SAVED!', '#44ff88');
 }
 
