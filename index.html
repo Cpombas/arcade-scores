@@ -110,7 +110,7 @@
   .columns-wrapper {
     width: min(1400px, 100%);
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, 1fr);
     gap: 0;
     align-items: start;
   }
@@ -120,7 +120,7 @@
     position: relative;
   }
 
-  .column:first-child {
+  .column:not(:last-child) {
     border-right: 2px solid var(--purple-mid);
   }
 
@@ -389,11 +389,17 @@
     .columns-wrapper {
       grid-template-columns: 1fr;
     }
-    .column:first-child {
-      border-right: none;
+    .column {
+      border-right: none !important;
       border-bottom: 2px solid var(--purple-mid);
       padding-bottom: 32px;
       margin-bottom: 32px;
+    }
+
+    .column:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
     }
   }
 </style>
@@ -444,6 +450,23 @@
     </div>
   </div>
 
+  <!-- ══════════ ONEY ══════════ -->
+  <div class="column">
+    <!-- PODIUM ONEY (1 spot) -->
+    <div class="podium-section">
+      <div class="section-label">— ONEY —</div>
+      <div class="podium" id="podium-oney"></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- RANKING ONEY -->
+    <div class="board-section">
+      <div class="section-label">— RANKING —</div>
+      <div id="board-oney"></div>
+    </div>
+  </div>
+
 </div>
 
 <div class="admin-bar">
@@ -490,6 +513,17 @@ const DEFAULT_BK2 = [
   { name: "SPECTRAL",    score: 99100  },
   { name: "PRISMATIC",   score: 67500  },
   { name: "NEWENTRY",    score: 31000  },
+];
+
+const DEFAULT_ONEY = [
+  { name: "STARLORD",    score: 875000 },
+  { name: "NINJABYTE",   score: 760300 },
+  { name: "BLAZERUNNER", score: 620100 },
+  { name: "COMETFALL",   score: 510000 },
+  { name: "VOXEL",       score: 445500 },
+  { name: "DARKPULSE",   score: 370200 },
+  { name: "GLITCHWAVE",  score: 295000 },
+  { name: "HYPERION",    score: 210800 },
 ];
 
 async function getScoresFromDB(board) {
@@ -567,18 +601,22 @@ function escHtml(s) {
 async function render() {
   const bk1 = await getScoresFromDB('bk1');
   const bk2 = await getScoresFromDB('bk2');
+  const oney = await getScoresFromDB('oney');
 
   renderPodium(bk1, 'podium-bk1', 3);
   renderBoard(bk1, 'board-bk1', 3);
 
   renderPodium(bk2, 'podium-bk2', 2);
   renderBoard(bk2, 'board-bk2', 2);
+  
+  renderPodium(oney, 'podium-oney', 1);
+  renderBoard(oney, 'board-oney', 1);
 }
 
 render();
 
 window.addEventListener('storage', e => {
-  if (e.key === 'arcade_scores_bk1' || e.key === 'arcade_scores_bk2') render();
+  if (e.key === 'arcade_scores_bk1' || e.key === 'arcade_scores_bk2' || e.key === 'arcade_scores_oney') render();
 });
 </script>
 </body>
